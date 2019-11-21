@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+</head>
+
+<body>
+    <div class="container">
+
+                <br>
+        <nav class="nav nav-pills nav-justified">
+          <a class="nav-item nav-link" href="{{ out }}/main.html">Main page</a>
+          <a class="nav-item nav-link active" href="{{ out }}/documentation.html">Documentation</a>
+          <a class="nav-item nav-link" href="{{ out }}/alphabet.html">Alphabetical List</a>
+        </nav>
+
+        <br>
+
+        <h2>
+            <code>
+                <span class="text-success">File</span>
+                <span class="text-success">{{ obj.name }}</span>
+            </code>
+        </h2>
+
+        <h3>Description</h3>
+        <h4>
+            <code>
+                <span class="text-success">{{ obj.documentation }}</span>
+            </code>
+        </h4>
+
+
+
+        {%- if obj.imports -%}
+        <h3>Imports</h3>
+
+
+        <div class="card mb-3">
+            {%- for import in obj.imports -%}
+            <div class="card-body text-dark">
+                <code class="text-success mr-2">
+                    {{ import }}
+                </code>
+            </div>
+            {%- endfor -%}
+        </div>
+                {%- endif -%}
+
+
+
+
+        <h3>Classes</h3>
+
+
+        {%- if obj.classes -%}
+            {%- for class in obj.classes -%}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <code>
+                        <a href="./classes/{{ class.name }}.html">{{ class.name }}</a>
+                    </code>
+                </div>
+                <div class="card-body text-dark">
+                    <div class="card-text">
+                        <span class="text-success">{{ class.documentation }}</span>
+                    </div>
+                </div>
+            </div>
+            {%- endfor -%}
+        {%- endif -%}
+
+                {%- if obj.enums -%}
+                <h3>Enums</h3>
+            {%- for class in obj.enums -%}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <code>
+                        <a href="./classes/{{ class.name }}.html">{{ class.name }}</a>
+                    </code>
+                </div>
+                <div class="card-body text-dark">
+                    <div class="card-text">
+                        <span class="text-success">{{ class.documentation }}</span>
+                    </div>
+                </div>
+            </div>
+            {%- endfor -%}
+        {%- endif -%}
+
+
+        <h3>Functions</h3>
+
+        {%- if obj.methods -%}
+            {%- for func in obj.methods -%}
+            <div class="card mb-3" id={{ func.id }}>
+                <div class="card-header">
+                    <span class="mr-2">Function</span>
+                    <span class="text-danger">{{ func.name }}</span>
+                </div>
+                <div class="card-body">
+                    <code>
+<!--                        {%- if func.annotations -%}-->
+<!--                            {%- for anot in func.annotations -%}-->
+<!--                            <span class="text-danger">{{ anot }}</span>-->
+<!--                            {%- endfor -%}-->
+<!--                        {%- endif -%}-->
+                        <span class="text-danger">{{ func.declaration }}</span>
+                    </code>
+                </div>
+                <div class="card-footer">
+                    <div class="card-text">
+                            <span class="text-success">{{ func.documentation }}</span>
+                    </div>
+                </div>
+            </div>
+            {%- endfor -%}
+        {%- endif -%}
+
+    </div>
+</body>
+
+</html>
