@@ -8,7 +8,7 @@ arg_parser = argparse.ArgumentParser()
 arg_parser.add_argument("--file", "-f", help="Path to file.")
 arg_parser.add_argument("--directory", "-d", help="Path to directory.")
 arg_parser.add_argument("--project", "-p", help="Path to project.")
-arg_parser.add_argument("--output", "-o", help="Output result.")
+arg_parser.add_argument("--output", "-o", help="Path to output directory.")
 arg_parser.add_argument('--version', action='version', version=ProjectInfo.version)
 args = arg_parser.parse_args()
 

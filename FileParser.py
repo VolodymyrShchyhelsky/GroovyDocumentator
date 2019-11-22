@@ -2,6 +2,7 @@ import re
 from Keywords import *
 from string import ascii_letters, digits
 
+
 class Object:
     def __init__(self, name, declaration=None, documentation=""):
         self.id = 0
@@ -23,10 +24,10 @@ class Method(Object):
         self.generic = None
 
     def concat(self):
-        for an in self.annotations:
-            self.declaration = an + "\n" + self.declaration
-        for an in self.qualifiers:
-            self.declaration = an + " " + self.declaration
+        for elem in self.annotations:
+            self.declaration = elem + "\n" + self.declaration
+        for elem in self.qualifiers:
+            self.declaration = elem + " " + self.declaration
         self.annotations.clear()
         self.qualifiers.clear()
 
@@ -73,8 +74,6 @@ class Enum(Class):
         parser = Parser(self.body, self.name)
         parser.parse_enum()
         self.enumeration = parser.enumeration
-        # for en in self.enumeration:
-        #     print("__", en)
         super().parse()
 
 
@@ -105,6 +104,16 @@ class File(Object):
         self.methods = parser.methods
 
 
+def is_valid_name(lexeme) -> bool:
+    lexeme = lexeme.strip()
+    if not len(lexeme):
+        return False
+    is_valid_start = re.match("[a-zA-Z_~]", lexeme[0])
+    is_valid_body = all([re.match("[a-zA-Z0-9_]", x) for x in lexeme[1:]])
+    is_keyword = lexeme in KEYWORDS
+    return bool(is_valid_start and is_valid_body and not is_keyword)
+
+
 class Parser:
     def __init__(self, text, class_name=None):
         self.text = text
@@ -120,6 +129,39 @@ class Parser:
         self.enums = list()
         self.enumeration = list()
         self.class_name = class_name
+
+    def parse_generic(self):
+        self.generic = self.get_block('<', '>')
+        self.text = self.text[len(self.generic) + 1:]
+
+    def read_line(self) -> str:
+        line_sep = self.text.find('\n')
+        line = self.text[:line_sep]
+        self.text = self.text[line_sep + 1:]
+        return line
+
+    def read_word(self) -> str:
+        self.text = self.text.lstrip()
+        tmp_text = self.text.lstrip(ascii_letters + '_' + digits)
+        word_len = max(len(self.text) - len(tmp_text), 1)
+        word = self.text[:word_len]
+        self.text = self.text[word_len:]
+        self.text = self.text.lstrip()
+        return word
+
+    def get_block(self, start_sign, finish_sign) -> str:
+        start = self.text.find(start_sign)
+        it = start
+        level = 1
+        while level != 0:
+            it += 1
+            if self.text[it] == start_sign:
+                level += 1
+            if self.text[it] == finish_sign:
+                level -= 1
+        return_val = self.text[start: it + 1]
+        self.text = self.text[it + 1:]
+        return return_val
 
     def parse_documentation_comment(self):
         self.last_comment = ""
@@ -144,25 +186,6 @@ class Parser:
                 self.text = self.text[1:]
             else:
                 flag = False
-
-    def parse_generic(self):
-        self.generic = self.get_block('<', '>')
-        self.text = self.text[len(self.generic) + 1:]
-
-    def read_line(self) -> str:
-        line_sep = self.text.find('\n')
-        line = self.text[:line_sep]
-        self.text = self.text[line_sep + 1:]
-        return line
-
-    def read_word(self) -> str:
-        self.text = self.text.lstrip()
-        tmp_text = self.text.lstrip(ascii_letters + '_' + digits)
-        word_len = max(len(self.text) - len(tmp_text), 1)
-        word = self.text[:word_len]
-        self.text = self.text[word_len:]
-        self.text = self.text.lstrip()
-        return word
 
     def parse_class(self):
         start = self.text.find("{")
@@ -266,28 +289,3 @@ class Parser:
 
             self.parse_object()
 
-    def get_block(self, start_sign, finish_sign) -> str:
-        start = self.text.find(start_sign)
-        it = start
-        level = 1
-        while level != 0:
-            it += 1
-            if self.text[it] == start_sign:
-                level += 1
-            if self.text[it] == finish_sign:
-                level -= 1
-        return_val = self.text[start: it + 1]
-        self.text = self.text[it + 1:]
-        return return_val
-
-
-def is_valid_name(lexeme) -> bool:
-    lexeme = lexeme.strip()
-    if not lexeme.strip():
-        return False
-    is_valid_start = re.match("[a-zA-Z_~]", lexeme[0])
-    if len(lexeme) <= 1:
-        return bool(is_valid_start)
-    is_valid_body = all([re.match("[a-zA-Z0-9_]", x) for x in lexeme[1:]])
-    is_keyword = lexeme in KEYWORDS
-    return bool(is_valid_start and is_valid_body and not is_keyword)
