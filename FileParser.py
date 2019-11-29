@@ -228,6 +228,12 @@ class Parser:
                 object_parameters = object_parameters + self.text[: self.text.find('{')]
                 self.get_block('{', '}')
                 is_method = True
+        if self.text.startswith("="):
+            self.text = self.text[1:]
+            self.text = self.text.lstrip()
+            if self.text.startswith("{"):
+                self.get_block('{', '}')
+                object_type = "Closure <br>" + object_type;
         declaration = object_type + " " + object_name + object_parameters
         if is_method:
             method = Method(object_name, declaration, self.last_comment)
