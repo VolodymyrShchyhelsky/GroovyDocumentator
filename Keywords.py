@@ -7,7 +7,6 @@ KEYWORDS = [
     "class",
     "const",
     "continue",
-    "def",
     "default",
     "do",
     "else",
