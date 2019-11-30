@@ -5,9 +5,8 @@ from FileParser import *
 
 class ClassDocGenerator(Generator):
     def __init__(self, output, class_in, is_enum=False):
-        super(ClassDocGenerator, self).__init__()
+        super(ClassDocGenerator, self).__init__(output)
         self.is_enum = is_enum
-        self.output = os.path.normpath(output)
         self.class_in = class_in
 
     def generate_structure(self):
@@ -39,25 +38,14 @@ class ClassDocGenerator(Generator):
 
     def gen_alphabet(self):
         for elem in self.class_in.classes:
-            pr_elem = ProjectElement("Class", elem.name, "class: " + self.class_in.name,
-                                     self.output + "/classes/" + elem.name + ".html")
-            Generator.elements.append(pr_elem)
+            self.append_subclass(elem, self.class_in.name)
         for elem in self.class_in.enums:
-            pr_elem = ProjectElement("Enum", elem.name, "class: " + self.class_in.name,
-                                     self.output + "/classes/" + elem.name + ".html")
-            Generator.elements.append(pr_elem)
+            self.append_subclass(elem, self.class_in.name)
         for elem in self.class_in.methods:
-            elem.id = 1 + len(Generator.elements)
-            pr_elem = ProjectElement("Method", elem.name, " class: " + self.class_in.name,
-                                     self.output + "/" + self.class_in.name + ".html#" + str(elem.id))
-            Generator.elements.append(pr_elem)
+            self.append_class_element(elem, self.class_in.name)
         for elem in self.class_in.constructors:
-            elem.id = 1 + len(Generator.elements)
-            pr_elem = ProjectElement("Constructor", elem.name, " class: " + self.class_in.name,
-                                     self.output + "/" + self.class_in.name + ".html#" + str(elem.id))
-            Generator.elements.append(pr_elem)
+            self.append_class_element(elem, self.class_in.name)
         for elem in self.class_in.fields:
-            elem.id = 1 + len(Generator.elements)
-            pr_elem = ProjectElement("Field", elem.name, " class: " + self.class_in.name,
-                                     self.output + "/" + self.class_in.name + ".html#" + str(elem.id))
-            Generator.elements.append(pr_elem)
+            self.append_class_element(elem, self.class_in.name)
+        for elem in self.class_in.closures:
+            self.append_class_element(elem, self.class_in.name)

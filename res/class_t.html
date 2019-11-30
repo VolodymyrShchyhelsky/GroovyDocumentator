@@ -44,10 +44,8 @@
             </div>
         </div>
 
-
-        <h3>Classes</h3>
-
         {%- if obj.classes -%}
+        <h3>Classes</h3>
             {%- for class in obj.classes -%}
             <div class="card mb-3">
                 <div class="card-header">
@@ -66,7 +64,7 @@
 
 
         {%- if obj.enums -%}
-                <h3>Enums</h3>
+        <h3>Enums</h3>
             {%- for class in obj.enums -%}
             <div class="card mb-3">
                 <div class="card-header">
@@ -83,8 +81,8 @@
             {%- endfor -%}
         {%- endif -%}
 
+        {%- if obj.constructors -%}
         <h3>Constructors</h3>
-
             {%- for func in obj.constructors -%}
             <div class="card mb-3" id={{ func.id }}>
 
@@ -111,11 +109,10 @@
                 </div>
             </div>
             {%- endfor -%}
-
-
-        <h3>Methods</h3>
+        {%- endif -%}
 
         {%- if obj.methods -%}
+        <h3>Methods</h3>
             {%- for func in obj.methods -%}
             <div class="card mb-3" id={{ func.id }}>
                 <div class="card-header">
@@ -141,26 +138,39 @@
             {%- endfor -%}
         {%- endif -%}
 
-        <h3>Fields</h3>
-
         {%- if obj.fields -%}
+            <h3>Fields</h3>
             {%- for func in obj.fields -%}
-           <div class="card mb-3" id={{ func.id }}>
-<!--                <div class="card-header">-->
-<!--                    <span class="mr-2">Field</span>-->
-<!--                    <span class="text-danger">{{ func.name }}</span>-->
-<!--                </div>-->
-                <div class="card-body">
-                    <code>
-                        <span class="text-danger">{{ func.declaration }}</span>
-                    </code>
-                </div>
-                <div class="card-footer">
-                    <div class="card-text">
+                <div class="card mb-3" id={{ func.id }}>
+                    <div class="card-body">
+                        <code>
+                            <span class="text-danger">{{ func.declaration }}</span>
+                        </code>
+                    </div>
+                    <div class="card-footer">
+                        <div class="card-text">
                             <span class="text-success">{{ func.documentation }}</span>
+                        </div>
                     </div>
                 </div>
-            </div>
+            {%- endfor -%}
+        {%- endif -%}
+
+        {%- if obj.closures -%}
+            <h3>Closures</h3>
+            {%- for func in obj.closures -%}
+                <div class="card mb-3" id={{ func.id }}>
+                    <div class="card-body">
+                        <code>
+                            <span class="text-danger">{{ func.declaration }}</span>
+                        </code>
+                    </div>
+                    <div class="card-footer">
+                        <div class="card-text">
+                            <span class="text-success">{{ func.documentation }}</span>
+                        </div>
+                    </div>
+                </div>
             {%- endfor -%}
         {%- endif -%}
 

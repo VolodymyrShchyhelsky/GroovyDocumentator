@@ -5,8 +5,7 @@ from FileDocGenerator import *
 
 class CatalogDocGenerator(Generator):
     def __init__(self, output=None, path=None, is_catalog_generation=False):
-        super(CatalogDocGenerator, self).__init__()
-        self.output_path = os.path.normpath(output)
+        super(CatalogDocGenerator, self).__init__(output)
         self.path = os.path.normpath(path)
         self.files = list()
         self.file_names = list()
@@ -21,9 +20,9 @@ class CatalogDocGenerator(Generator):
         self.files = sorted(glob.glob(self.path + "/*.groovy"))
         self.file_names = [os.path.basename(x) for x in self.files]
         for file in self.files:
-            if not os.path.exists(self.output_path + "/files/" + os.path.basename(file)):
-                os.makedirs(self.output_path + "/files/" + os.path.basename(file))
-            output_path_dir = self.output_path + "/files/" + os.path.basename(file)
+            if not os.path.exists(self.output + "/files/" + os.path.basename(file)):
+                os.makedirs(self.output + "/files/" + os.path.basename(file))
+            output_path_dir = self.output + "/files/" + os.path.basename(file)
             DocumentGenerator(output_path_dir, file)
 
     def generate_dir(self):
@@ -31,7 +30,7 @@ class CatalogDocGenerator(Generator):
         self.directories = list(filter(lambda x: os.path.isdir(x), content))
         self.dir_names = [os.path.basename(x) for x in self.directories]
         for module_path in self.directories:
-            output_path_dir = self.output_path + "/" + os.path.basename(module_path)
+            output_path_dir = self.output + "/" + os.path.basename(module_path)
             # mainly in groovy used framework's for testing with completely different syntax (example:  Spock Primer)
             if os.path.basename(module_path) not in ["test", "TEST", "Test"]:
                 CatalogDocGenerator(output_path_dir, module_path)
@@ -44,8 +43,8 @@ class CatalogDocGenerator(Generator):
         self.description = self.description.replace("\n", "<br>")
 
     def generate(self):
-        if not os.path.exists(self.output_path):
-            os.makedirs(self.output_path)
+        if not os.path.exists(self.output):
+            os.makedirs(self.output)
         self.get_description()
         if not self.is_catalog_generation:
             self.generate_dir()
@@ -57,5 +56,5 @@ class CatalogDocGenerator(Generator):
             "name": os.path.basename(self.path),
             "out": Generator.init_out_path
         })
-        with open(self.output_path + "/" + os.path.basename(self.path) + ".html", "w") as f:
+        with open(self.output + "/" + os.path.basename(self.path) + ".html", "w") as f:
             f.write(index_html)

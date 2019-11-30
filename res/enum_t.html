@@ -146,9 +146,8 @@
             {%- endfor -%}
         {%- endif -%}
 
-        <h3>Fileds</h3>
-
         {%- if obj.fields -%}
+        <h3>Fileds</h3>
             {%- for func in obj.fields -%}
             <div class="card mb-3">
 <!--                <div class="card-header">-->
@@ -166,6 +165,24 @@
                     </div>
                 </div>
             </div>
+            {%- endfor -%}
+        {%- endif -%}
+
+        {%- if obj.closures -%}
+            <h3>Closures</h3>
+            {%- for func in obj.closures -%}
+                <div class="card mb-3" id={{ func.id }}>
+                    <div class="card-body">
+                        <code>
+                            <span class="text-danger">{{ func.declaration }}</span>
+                        </code>
+                    </div>
+                    <div class="card-footer">
+                        <div class="card-text">
+                            <span class="text-success">{{ func.documentation }}</span>
+                        </div>
+                    </div>
+                </div>
             {%- endfor -%}
         {%- endif -%}
 

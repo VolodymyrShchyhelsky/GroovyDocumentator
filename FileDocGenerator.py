@@ -3,8 +3,7 @@ from ClassDocGenerator import *
 
 class DocumentGenerator(Generator):
     def __init__(self, output=None, file_path=None):
-        super(DocumentGenerator, self).__init__()
-        self.output = os.path.normpath(output)
+        super(DocumentGenerator, self).__init__(output)
         self.file_path = os.path.normpath(file_path)
         self.file = None
         self.generate()
@@ -43,14 +42,10 @@ class DocumentGenerator(Generator):
 
     def gen_alphabet(self):
         for elem in self.file.classes:
-            pr_elem = ProjectElement("class", elem.name, self.file_path,
-                                     self.output + "/classes/" + elem.name + ".html")
-            Generator.elements.append(pr_elem)
+            self.append_file_class(elem, self.file_path)
         for elem in self.file.enums:
-            pr_elem = ProjectElement("enum", elem.name, self.file_path, self.output + "/classes/" + elem.name + ".html")
-            Generator.elements.append(pr_elem)
+            self.append_file_class(elem, self.file_path)
         for elem in self.file.methods:
-            elem.id = 1 + len(Generator.elements)
-            pr_elem = ProjectElement("function", elem.name, self.file_path,
-                                     self.output + "/" + self.file.name + ".html#" + str(elem.id))
-            Generator.elements.append(pr_elem)
+            self.append_file_element(elem, self.file.name, self.file_path)
+        for elem in self.file.closures:
+            self.append_file_element(elem, self.file.name, self.file_path)

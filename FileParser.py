@@ -1,6 +1,7 @@
 import re
 from Keywords import *
 from string import ascii_letters, digits
+from enum import Enum
 
 
 class Object:
@@ -43,6 +44,11 @@ class Field(Object):
         self.qualifiers.clear()
 
 
+class Closure(Object):
+    def __init__(self, name, declaration, documentation):
+        super().__init__(name, declaration, documentation)
+
+
 class Class(Object):
     def __init__(self, body, name, declaration, documentation):
         super().__init__(name, declaration, documentation)
@@ -54,6 +60,7 @@ class Class(Object):
         self.annotations = list()
         self.qualifiers = list()
         self.enums = list()
+        self.closures = list()
 
     def parse(self):
         parser = Parser(self.body, self.name)
@@ -63,6 +70,7 @@ class Class(Object):
         self.classes = parser.classes
         self.constructors = parser.constructors
         self.enums = parser.enums
+        self.closures = parser.closures
 
 
 class Enum(Class):
@@ -86,9 +94,12 @@ class File(Object):
         self.enums = list()
         self.fields = list()
         self.methods = list()
+        self.closures = list()
 
     def parse(self):
         parser = Parser(self.body)
+        if self.body.startswith("#!"):
+            parser.read_line()
         self.body = self.body.lstrip()
         if self.body.startswith("/**"):
             parser.parse_documentation_comment()
@@ -102,6 +113,7 @@ class File(Object):
         self.enums = parser.enums
         self.fields = parser.fields
         self.methods = parser.methods
+        self.closures = parser.closures
 
 
 def is_valid_name(lexeme) -> bool:
@@ -128,6 +140,7 @@ class Parser:
         self.constructors = list()
         self.enums = list()
         self.enumeration = list()
+        self.closures = list()
         self.class_name = class_name
 
     def parse_generic(self):
@@ -145,7 +158,10 @@ class Parser:
         tmp_text = self.text.lstrip(ascii_letters + '_' + digits)
         word_len = max(len(self.text) - len(tmp_text), 1)
         word = self.text[:word_len]
-        self.text = self.text[word_len:]
+        if word.startswith("{"):
+            self.get_block('{', '}')
+        else:
+            self.text = self.text[word_len:]
         self.text = self.text.lstrip()
         return word
 
@@ -209,13 +225,17 @@ class Parser:
             self.classes.append(new_class)
 
     def parse_object(self):
-        is_method = False
-        object_type = self.read_word()
-        if not is_valid_name(object_type):
+        class ObjectType(Enum):
+            METHOD = 0
+            FIELD = 1
+            CLOSURE = 2
+        object_type = ObjectType.FIELD
+        type = self.read_word()
+        if not is_valid_name(type):
             return
-        if object_type == self.class_name:
-            object_name = object_type
-            object_type = ""
+        if type == self.class_name:
+            object_name = type
+            type = ""
         else:
             object_name = self.read_word()
             if not is_valid_name(object_name):
@@ -227,32 +247,35 @@ class Parser:
             if self.text.startswith("{") or self.text.startswith("throws"):
                 object_parameters = object_parameters + self.text[: self.text.find('{')]
                 self.get_block('{', '}')
-                is_method = True
-        if self.text.startswith("="):
+                object_type = ObjectType.METHOD
+        elif self.text.startswith("="):
             self.text = self.text[1:]
             self.text = self.text.lstrip()
             if self.text.startswith("{"):
                 self.get_block('{', '}')
-                object_type = "Closure <br>" + object_type;
-        declaration = object_type + " " + object_name + object_parameters
-        if is_method:
+                object_type = ObjectType.CLOSURE
+        declaration = type + " " + object_name + object_parameters
+        if object_type == ObjectType.METHOD:
             method = Method(object_name, declaration, self.last_comment)
-            self.last_comment = ""
             method.annotations = self.annotations
-            self.annotations.clear()
             method.qualifiers = self.qualifiers
             method.generic = self.generic
             method.concat()
-            # print("Method ", method.declaration)
             if object_name == self.class_name:
                 self.constructors.append(method)
             else:
                 self.methods.append(method)
-        else:
+        elif object_type == ObjectType.FIELD:
             field = Field(object_name, declaration, self.last_comment)
             field.qualifiers = self.qualifiers
             field.concat()
             self.fields.append(field)
+        elif object_type == ObjectType.CLOSURE:
+            closure = Closure(object_name, declaration, self.last_comment)
+            self.closures.append(closure)
+        self.last_comment = ""
+        self.annotations.clear()
+        self.qualifiers.clear()
 
     def parse(self):
         while len(self.text) > 1:
@@ -291,6 +314,14 @@ class Parser:
 
             if self.text.startswith("<"):
                 self.parse_generic()
+                continue
+
+            if self.text.startswith("{"):
+                # print("__")
+                # print(self.text)
+                self.get_block('{', '}')
+                # print("^^^^^")
+                # print(self.text)
                 continue
 
             self.parse_object()
