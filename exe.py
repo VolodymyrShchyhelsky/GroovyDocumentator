@@ -13,8 +13,6 @@ arg_parser.add_argument('--version', action='version', version=ProjectInfo.versi
 args = arg_parser.parse_args()
 
 Generator.init_out_path = os.path.abspath(os.path.normpath(args.output))
-if Generator.init_out_path.endswith('/'):
-    Generator.init_out_path = Generator.init_out_path[:-1]
 if not os.path.exists(Generator.init_out_path):
     os.makedirs(Generator.init_out_path)
 if os.path.exists(Generator.init_out_path + '/documentation.html'):
@@ -22,14 +20,17 @@ if os.path.exists(Generator.init_out_path + '/documentation.html'):
 basename = ""
 
 if args.file is not None:
-    basename = os.path.basename(args.file)
+    basename = args.file
     DocumentGenerator(args.output, args.file)
 elif args.directory is not None:
-    basename = os.path.basename(args.directory)
+    basename = args.directory
     CatalogDocGenerator(args.output, args.directory, True)
 elif args.project is not None:
-    basename = os.path.basename(args.project)
+    basename = args.project
     CatalogDocGenerator(args.output, args.project)
+if basename.endswith('/'):
+    basename = basename[:-1]
+basename = os.path.basename(basename)
 
 MainGenerator(basename)
 os.rename(Generator.init_out_path + '/' + basename + ".html",

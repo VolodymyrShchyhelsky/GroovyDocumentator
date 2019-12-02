@@ -8,13 +8,17 @@ class Object:
     def __init__(self, name, declaration=None, documentation=""):
         self.id = 0
         self.name = name
+        if declaration:
+            declaration = declaration.replace('<', '&lt;').replace('>', '&gt;')
         self.declaration = declaration
         if documentation == "":
             self.documentation = "Empty documentation"
         else:
             self.documentation = documentation
             self.documentation = self.documentation.replace(" *", '<br>')
-            self.documentation = self.documentation[3:-2]
+            self.documentation = self.documentation[2:-2]
+            if self.documentation.startswith("*"):
+                self.documentation = self.documentation[1:]
 
 
 class Method(Object):
@@ -27,6 +31,9 @@ class Method(Object):
     def concat(self):
         for elem in self.annotations:
             self.declaration = elem + "\n" + self.declaration
+        if self.generic:
+            self.generic = self.generic.replace('<', '&lt;').replace('>', '&gt;')
+            self.declaration = self.generic + " " + self.declaration
         for elem in self.qualifiers:
             self.declaration = elem + " " + self.declaration
         self.annotations.clear()
@@ -63,7 +70,10 @@ class Class(Object):
         self.closures = list()
 
     def parse(self):
-        parser = Parser(self.body, self.name)
+        class_type = None
+        if self.declaration.find("interface") != -1:
+            class_type = "interface"
+        parser = Parser(self.body, self.name, class_type)
         parser.parse()
         self.methods = parser.methods
         self.fields = parser.fields
@@ -127,14 +137,14 @@ def is_valid_name(lexeme) -> bool:
 
 
 class Parser:
-    def __init__(self, text, class_name=None):
+    def __init__(self, text, class_name=None, class_type=None):
         self.text = text
         self.last_comment = ""
         self.imports = list()
         self.classes = list()
         self.annotations = list()
         self.qualifiers = list()
-        self.generic = list
+        self.generic = None
         self.methods = list()
         self.fields = list()
         self.constructors = list()
@@ -142,10 +152,10 @@ class Parser:
         self.enumeration = list()
         self.closures = list()
         self.class_name = class_name
+        self.class_type = class_type
 
     def parse_generic(self):
         self.generic = self.get_block('<', '>')
-        self.text = self.text[len(self.generic) + 1:]
 
     def read_line(self) -> str:
         line_sep = self.text.find('\n')
@@ -190,7 +200,7 @@ class Parser:
     def parse_enum(self):
         flag = True
         while flag:
-            if self.text.startswith("/**"):
+            if self.text.startswith("/*"):
                 self.parse_documentation_comment()
             name = self.read_word()
             value = ""
@@ -210,6 +220,8 @@ class Parser:
         self.last_comment = ""
         type = self.text.split()[0]
         name = self.text.split()[1]
+        if name.find("<") != -1:
+            name = name[:name.find("<")]
         class_body = self.get_block('{', '}')
         if type == "enum":
             new_class = Enum(class_body[1:-1], name, declaration, documentation)
@@ -233,13 +245,37 @@ class Parser:
         type = self.read_word()
         if not is_valid_name(type):
             return
-        if type == self.class_name:
+        if self.text.startswith("["):
+            end_of_array_name = self.text.find(" ")
+            type += self.text[:end_of_array_name]
+            self.text = self.text[end_of_array_name:]
+        if self.text.startswith("<"):
+            end_of_name = self.text.find(">")
+            type += self.text[:end_of_name+1]
+            self.text = self.text[end_of_name+1:]
+            self.text = self.text.lstrip()
+            tmp = self.text.split("\n")[0]
+            begin_of_params = tmp.find("(")
+            if begin_of_params != -1:
+                tmp = tmp[:begin_of_params]
+                #def <T> T name(...
+                if len(tmp.split()) == 2:
+                    type += self.read_word()
+        if type == self.class_name or (len(self.qualifiers) and (self.text.startswith("=") or self.text.startswith("("))):
             object_name = type
             type = ""
         else:
-            object_name = self.read_word()
-            if not is_valid_name(object_name):
-                return
+            self.text = self.text.lstrip()
+            #spock framework not groovy syntax: def "name"()
+            if self.text.startswith("\"") and type == "def":
+                object_name_len = self.text[1:].find("\"")
+                object_name = self.text[:object_name_len + 2]
+                self.text = self.text[object_name_len + 2:]
+            else:
+                object_name = self.read_word()
+                if not is_valid_name(object_name):
+                    return
+
         object_parameters = ""
         if self.text.startswith("("):
             object_parameters = self.get_block('(', ')')
@@ -255,6 +291,8 @@ class Parser:
                 self.get_block('{', '}')
                 object_type = ObjectType.CLOSURE
         declaration = type + " " + object_name + object_parameters
+        if self.class_type == "interface":
+            object_type = ObjectType.METHOD
         if object_type == ObjectType.METHOD:
             method = Method(object_name, declaration, self.last_comment)
             method.annotations = self.annotations
@@ -270,6 +308,9 @@ class Parser:
             field.qualifiers = self.qualifiers
             field.concat()
             self.fields.append(field)
+            self.text = self.text.lstrip()
+            if self.text.startswith("="):
+                self.read_line()
         elif object_type == ObjectType.CLOSURE:
             closure = Closure(object_name, declaration, self.last_comment)
             self.closures.append(closure)
@@ -280,7 +321,7 @@ class Parser:
     def parse(self):
         while len(self.text) > 1:
             self.text = self.text.lstrip()
-            if self.text.startswith("/**"):
+            if self.text.startswith("/*"):
                 self.parse_documentation_comment()
                 continue
 
@@ -304,6 +345,7 @@ class Parser:
                 continue
 
             if (self.text.startswith("private ") or
+                    self.text.startswith("synchronized ") or
                     self.text.startswith("public ") or
                     self.text.startswith("protected ") or
                     self.text.startswith("abstract ") or
@@ -317,11 +359,7 @@ class Parser:
                 continue
 
             if self.text.startswith("{"):
-                # print("__")
-                # print(self.text)
                 self.get_block('{', '}')
-                # print("^^^^^")
-                # print(self.text)
                 continue
 
             self.parse_object()

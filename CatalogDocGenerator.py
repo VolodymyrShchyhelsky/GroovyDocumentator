@@ -13,8 +13,8 @@ class CatalogDocGenerator(Generator):
         self.dir_names = list()
         self.is_catalog_generation = is_catalog_generation
         self.description = "There is no .md files"
-        if os.path.isdir(self.path):
-            self.generate()
+        # if os.path.isdir(self.path):
+        self.generate()
 
     def generate_files(self):
         self.files = sorted(glob.glob(self.path + "/*.groovy"))

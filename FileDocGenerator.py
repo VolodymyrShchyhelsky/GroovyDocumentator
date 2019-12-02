@@ -16,10 +16,12 @@ class DocumentGenerator(Generator):
             self.file = File(txt, os.path.basename(self.file_path))
             self.file.parse()
             self.gen_alphabet()
-            self.generate_file()
-            self.generate_classes()
+            full_path_len = len(os.path.abspath(self.output) + self.file.name)
+            if full_path_len < 250:
+                self.generate_file()
+                self.generate_classes()
         except Exception as error:
-            print(error)
+            print(error, self.output)
 
     def generate_file(self):
         if not os.path.exists(self.output):
