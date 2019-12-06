@@ -111,7 +111,7 @@ class File(Object):
         if self.body.startswith("#!"):
             parser.read_line()
         self.body = self.body.lstrip()
-        if self.body.startswith("/**"):
+        if self.body.startswith("/*"):
             parser.parse_documentation_comment()
             self.documentation = parser.last_comment
             parser.last_comment = ""
@@ -227,7 +227,7 @@ class Parser:
             new_class = Enum(class_body[1:-1], name, declaration, documentation)
         else:
             new_class = Class(class_body[1:-1], name, declaration, documentation)
-        new_class.annotations = self.annotations
+        new_class.annotations = self.annotations[:]
         self.annotations.clear()
         new_class.qualifiers = self.qualifiers
         new_class.parse()
